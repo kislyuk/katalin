@@ -1,0 +1,40 @@
+# katalin GitHub action
+
+This is a GitHub action that generates LLM-assisted suggestions for improving Python code in PRs, and posts them as PR
+comments.
+
+## Inputs
+
+### `openai-api-token`
+
+**Required** The OpenAI API token to use.
+
+### `enabled-advisors`
+
+A newline-separated list of advisor modules to enable. Available advisors are:
+
+* `docstrings`: Provides doscstring suggestions for undocumented Python modules, functions, classes, and methods.
+* `security`: Provides comments regarding potential security concerns.
+* `logic-check`: Identifies possible logic errors.
+
+<!--
+### `custom-prompts`
+
+A newline-separated list of colon-separated `node:prompt` pairs. TODO
+-->
+
+## Outputs
+
+None
+
+## Example usage
+
+```yaml
+uses: kislyuk/katalin@v1
+with:
+  openai-api-token: ${{secrets.GITHUB_TOKEN}}
+  enabled-advisors: |-
+    docstrings
+    security
+    logic-check
+```

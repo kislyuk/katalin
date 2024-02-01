@@ -1,0 +1,35 @@
+name: Python Code Advisor
+description: Comments on PRs with suggested documentation, security, and logic improvements
+inputs:
+  openai-api-key:
+    description: The OpenAI API key used to create an authenticated OpenAI API client
+    required: true
+  openai-model-name:
+    description: The OpenAI model to use to generate suggestions
+    default: gpt-3.5-turbo-0125
+  enabled-advisors:
+    description: List of advisor modules to enable
+    default: |-
+      docstrings
+      security
+      logic-check
+    required: true
+
+defaults:
+  run:
+    shell: bash
+
+runs:
+  using: "composite"
+  steps:
+    - run: |
+        pip install -r "${{github.action_path}}/requirements.txt"
+        python "${{github.action_path}}/main.py"
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ github.token }}
+        GITHUB_EVENT: ${{ toJson(github.event) }}
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
+        OPENAI_MODEL_NAME: ${{ inputs.openai-model-name }}
+        ENABLED_ADVISORS: ${{ inputs.enabled-advisors }}
+      if: ${{ ! contains(github.event.pull_request.labels.*.name, 'skip-llm-advisors') }}
