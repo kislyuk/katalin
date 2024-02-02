@@ -1,16 +1,13 @@
 name: ghautodoc
-on:
-  workflow_dispatch:
-  pull_request:
+
+on: [pull_request]
+
 defaults:
   run: { shell: bash }
 
 jobs:
-  build:
-    strategy:
-      fail-fast: false
-      matrix: { os: [ubuntu] }
-    runs-on: ${{ matrix.os }}-latest
+  ghautodoc:
+    runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v1
     - uses: actions/setup-python@v5
