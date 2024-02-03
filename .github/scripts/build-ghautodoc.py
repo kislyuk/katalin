@@ -83,5 +83,5 @@ for file_change in get_files(pr_url, headers):
             ),
             commit_id=pr_head_sha,
             path=file_change["filename"],
-            line=old_range_start,
+            line=old_range_start + 1,
         )
