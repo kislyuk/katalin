@@ -72,6 +72,7 @@ The banana documentation system has detected that this class, method, or functio
 
 Here is a proposed docstring for this class, method, or function:
 ```suggestion
+{original_line}
 {body}
 ```
 You can edit or replace the proposed docstring before committing it by clicking the "..." menu.
@@ -91,7 +92,10 @@ def suggest_docstring(patch, hunk, line):
     add_comment(
         pr_url=pr_url,
         headers=headers,
-        body=SUGGESTION_TEMPLATE.format(body=f"This is a suggestion for {hunk}"),
+        body=SUGGESTION_TEMPLATE.format(
+            original_line=line.value,
+            body=f'    """This is a doctring for {line.value}"""',
+        ),
         commit_id=pr_head_sha,
         path=patch.source_file[2:],
         line=line.target_line_no,
@@ -100,6 +104,8 @@ def suggest_docstring(patch, hunk, line):
 
 def scan_diff(pr_url, headers):
     for patch in PatchSet(get_diff(pr_url, headers)):
+        if not patch.source_file.endswith(".py"):
+            continue
         for hunk in patch:
             for line in hunk:
                 if line.line_type != "+":
