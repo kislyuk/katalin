@@ -1,8 +1,8 @@
 import json
 import os
-import re
 
 import requests
+from unidiff import PatchSet
 
 print("ghautodoc")
 
@@ -58,30 +58,49 @@ def add_comment(
     return res.json()
 
 
-def parse_patch_header(patch: str) -> list:
-    return re.findall(r"@@ -(.+?) \+(.+?) @@", "@@ -0,0 +1 @@\n+a")
+# def parse_patch_header(patch: str):
+#     for line in patch.splitlines():
+#         if re.match(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))?\ @@[ ]?(.*)", line):
+#     return re.findall(r"@@ -(.+?) \+(.+?) @@", "@@ -0,0 +1 @@\n+a")
 
 
-SUGGESTION_TEMPLATE = """```suggestion
+SUGGESTION_TEMPLATE = """
+#### Suggested documentation improvement
+```suggestion
 {body}
-```"""
+```
+_This is a test of the automated banana documentation system. This is only a test._
+"""
 
 
 # https://api.github.com/repos/OWNER/REPO/pulls/PULL_NUMBER/comments \
 #  -d '{"body":"Great stuff!","commit_id":"6dcb09b5b57875f334f61aebed695e2e4193db5e",
 #       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
-for file_change in get_files(pr_url, headers):
-    for old_range, new_range in parse_patch_header(file_change["patch"]):
-        old_range_start = int(old_range.split(",")[0])
-        # TODO: extract lines from patch
+for patch in PatchSet(get_diff(pr_url, headers)):
+    for hunk in patch:
+        print("Processing:", hunk)
         add_comment(
             pr_url=pr_url,
             headers=headers,
-            body=SUGGESTION_TEMPLATE.format(
-                body=f"This is a suggestion for {file_change}"
-            ),
+            body=SUGGESTION_TEMPLATE.format(body=f"This is a suggestion for {hunk}"),
             commit_id=pr_head_sha,
-            path=file_change["filename"],
-            line=old_range_start + 1,
+            path=patch.source_file[2:],
+            line=hunk.source_start,
         )
+
+
+# for file_change in get_files(pr_url, headers):
+#     for source_offset, target_offset in parse_patch_header(file_change["patch"]):
+#         source_offset_start = int(source_offset.split(",")[0])
+#         # TODO: extract lines from patch
+#         add_comment(
+#             pr_url=pr_url,
+#             headers=headers,
+#             body=SUGGESTION_TEMPLATE.format(
+#                 body=f"This is a suggestion for {file_change}"
+#             ),
+#             commit_id=pr_head_sha,
+#             path=file_change["filename"],
+#             line=source_offset_start + 1,
+#         )
