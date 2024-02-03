@@ -1,5 +1,6 @@
 import json
 import os
+import re
 
 import requests
 
@@ -56,16 +57,30 @@ def add_comment(
     return res.json()
 
 
+def parse_patch_header(patch: str) -> list:
+    return re.findall(r"@@ -(.+?) \+(.+?) @@", "@@ -0,0 +1 @@\n+a")
+
+
+SUGGESTION_TEMPLATE = """```suggestion
+{body}
+```"""
+
+
 # https://api.github.com/repos/OWNER/REPO/pulls/PULL_NUMBER/comments \
-#  -d '{"body":"Great stuff!","commit_id":"6dcb09b5b57875f334f61aebed695e2e4193db5e","path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
+#  -d '{"body":"Great stuff!","commit_id":"6dcb09b5b57875f334f61aebed695e2e4193db5e",
+#       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
 for file_change in get_files(pr_url, headers):
-    # TODO: extract lines from patch
-    add_comment(
-        pr_url=pr_url,
-        headers=headers,
-        body="test",
-        commit_id=pr_head_sha,
-        path=file_change["filename"],
-        line=1,
-    )
+    for old_range, new_range in parse_patch_header(file_change["patch"]):
+        old_range_start = old_range.split(",")[0]
+        # TODO: extract lines from patch
+        add_comment(
+            pr_url=pr_url,
+            headers=headers,
+            body=SUGGESTION_TEMPLATE.format(
+                body=f"This is a suggestion for {file_change}"
+            ),
+            commit_id=pr_head_sha,
+            path=file_change["filename"],
+            line=old_range_start,
+        )
