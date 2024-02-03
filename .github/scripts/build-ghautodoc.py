@@ -65,10 +65,15 @@ def add_comment(
 
 
 SUGGESTION_TEMPLATE = """
-#### Suggested documentation improvement
+### Suggested documentation improvement
+The banana documentation system has detected that this class, method, or function has no docstring.
+
+Here is a proposed docstring for this class, method, or function:
 ```suggestion
 {body}
 ```
+You can edit or replace the proposed docstring before committing it by clicking the "..." menu.
+
 _This is a test of the automated banana documentation system. This is only a test._
 """
 
@@ -80,6 +85,7 @@ _This is a test of the automated banana documentation system. This is only a tes
 for patch in PatchSet(get_diff(pr_url, headers)):
     for hunk in patch:
         print("Processing:", hunk)
+        print("Will add comment at", patch.source_file[2:], hunk.source_start)
         add_comment(
             pr_url=pr_url,
             headers=headers,
