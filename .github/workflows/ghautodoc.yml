@@ -15,7 +15,7 @@ jobs:
         python-version: '3.12'
     - name: Run script
       env:
-        CONTEXT_GITHUB: ${{ toJson(github) }}
+        GITHUB_CONTEXT: ${{toJson(github)}}
       run: |
-        pip install -Uq ghapi
+        pip install -Uq requests
         python .github/scripts/build-ghautodoc.py
