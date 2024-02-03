@@ -17,5 +17,5 @@ jobs:
       env:
         GITHUB_CONTEXT: ${{toJson(github)}}
       run: |
-        pip install -Uq requests
+        pip install -Uq requests unidiff
         python .github/scripts/build-ghautodoc.py

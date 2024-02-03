@@ -15,9 +15,21 @@ headers = {
     "Authorization": f"Bearer {github_context['token']}",
 }
 
-res = requests.get(
-    pr_url, headers=dict(headers, Accept="application/vnd.github.v3.diff"), timeout=30
-)
-res.raise_for_status()
 
-print(res.content)
+def get_diff(pr_url: str, headers: dict) -> str:
+    res = requests.get(
+        pr_url,
+        headers=dict(headers, Accept="application/vnd.github.v3.diff"),
+        timeout=30,
+    )
+    res.raise_for_status()
+    return res.text
+
+
+def get_files(pr_url: str, headers: dict) -> list:
+    res = requests.get(f"{pr_url}/files", headers=headers, timeout=30)
+    res.raise_for_status()
+    return res.json()
+
+
+print(get_files(pr_url, headers))
