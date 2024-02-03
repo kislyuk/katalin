@@ -41,6 +41,7 @@ def add_comment(
     commit_id: str,
     path: str,
     line: int,
+    side: str = "RIGHT",
 ):
     res = requests.post(
         f"{pr_url}/comments",
@@ -50,6 +51,7 @@ def add_comment(
             commit_id=commit_id,
             path=path,
             line=line,
+            side=side,
         ),
         timeout=30,
     )
@@ -85,26 +87,28 @@ _This is a test of the automated banana documentation system. This is only a tes
 
 def suggest_docstring(patch, hunk, line):
     print("Processing:", line)
-    print("Will add comment at", patch.source_file[2:], hunk.source_start)
+    print("Will add comment at", patch.source_file[2:], line.target_line_no)
     add_comment(
         pr_url=pr_url,
         headers=headers,
         body=SUGGESTION_TEMPLATE.format(body=f"This is a suggestion for {hunk}"),
         commit_id=pr_head_sha,
         path=patch.source_file[2:],
-        line=line.diff_line_no,
+        line=line.target_line_no,
     )
 
 
-for patch in PatchSet(get_diff(pr_url, headers)):
-    for hunk in patch:
-        for line in hunk:
-            if line.line_type != "+":
-                continue
-            if line.value.startswith("def ") or line.value.startswith("class "):
-                suggest_docstring(patch, hunk, line)
+def scan_diff(pr_url, headers):
+    for patch in PatchSet(get_diff(pr_url, headers)):
+        for hunk in patch:
+            for line in hunk:
+                if line.line_type != "+":
+                    continue
+                if line.value.startswith("def ") or line.value.startswith("class "):
+                    suggest_docstring(patch, hunk, line)
 
 
+scan_diff(pr_url, headers)
 # for file_change in get_files(pr_url, headers):
 #     for source_offset, target_offset in parse_patch_header(file_change["patch"]):
 #         source_offset_start = int(source_offset.split(",")[0])
