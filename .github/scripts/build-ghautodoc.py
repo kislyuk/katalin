@@ -88,7 +88,7 @@ _This is a test of the automated banana documentation system. This is only a tes
 
 def suggest_docstring(patch, hunk, line):
     print("Processing:", line)
-    print("Will add comment at", patch.source_file[2:], line.target_line_no)
+    print("Will add comment at", patch.target_file[2:], line.target_line_no)
     add_comment(
         pr_url=pr_url,
         headers=headers,
@@ -97,7 +97,7 @@ def suggest_docstring(patch, hunk, line):
             body=f'    """This is a doctring for {line.value}"""',
         ),
         commit_id=pr_head_sha,
-        path=patch.source_file[2:],
+        path=patch.target_file[2:],
         line=line.target_line_no,
     )
 
@@ -105,7 +105,7 @@ def suggest_docstring(patch, hunk, line):
 def scan_diff(pr_url, headers):
     for patch in PatchSet(get_diff(pr_url, headers)):
         print("Processing patch", patch.__dict__)
-        if not patch.source_file.endswith(".py"):
+        if not patch.target_file.endswith(".py"):
             continue
         for hunk in patch:
             print("Processing hunk", hunk.__dict__)
