@@ -1,3 +1,5 @@
+def hello():
+    hi
 baobab
 bab
 ssxac
@@ -12,3 +14,5 @@ a
 na
 basfbas
 banana
+class goodbye:
+    pass
