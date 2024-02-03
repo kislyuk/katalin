@@ -1,5 +1,7 @@
 bab
-ssxac
+ssbab
+
+xac
 
 ac
 acx
@@ -10,3 +12,9 @@ b
 a
 na
 basfbas
+db
+
+bab
+
+a
+aa
