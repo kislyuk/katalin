@@ -53,6 +53,7 @@ def add_comment(
         ),
         timeout=30,
     )
+    print(res.text)
     res.raise_for_status()
     return res.json()
 
