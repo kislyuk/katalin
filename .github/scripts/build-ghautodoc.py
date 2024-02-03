@@ -104,9 +104,11 @@ def suggest_docstring(patch, hunk, line):
 
 def scan_diff(pr_url, headers):
     for patch in PatchSet(get_diff(pr_url, headers)):
+        print("Processing patch", patch.__dict__)
         if not patch.source_file.endswith(".py"):
             continue
         for hunk in patch:
+            print("Processing hunk", hunk.__dict__)
             for line in hunk:
                 if line.line_type != "+":
                     continue
