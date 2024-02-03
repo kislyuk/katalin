@@ -82,18 +82,27 @@ _This is a test of the automated banana documentation system. This is only a tes
 #  -d '{"body":"Great stuff!","commit_id":"6dcb09b5b57875f334f61aebed695e2e4193db5e",
 #       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
+
+def suggest_docstring(patch, hunk, line):
+    print("Processing:", line)
+    print("Will add comment at", patch.source_file[2:], hunk.source_start)
+    add_comment(
+        pr_url=pr_url,
+        headers=headers,
+        body=SUGGESTION_TEMPLATE.format(body=f"This is a suggestion for {hunk}"),
+        commit_id=pr_head_sha,
+        path=patch.source_file[2:],
+        line=line.diff_line_no,
+    )
+
+
 for patch in PatchSet(get_diff(pr_url, headers)):
     for hunk in patch:
-        print("Processing:", hunk)
-        print("Will add comment at", patch.source_file[2:], hunk.source_start)
-        add_comment(
-            pr_url=pr_url,
-            headers=headers,
-            body=SUGGESTION_TEMPLATE.format(body=f"This is a suggestion for {hunk}"),
-            commit_id=pr_head_sha,
-            path=patch.source_file[2:],
-            line=hunk.source_start,
-        )
+        for line in hunk:
+            if line.line_type != "+":
+                continue
+            if line.value.startswith("def ") or line.value.startswith("class "):
+                suggest_docstring(patch, hunk, line)
 
 
 # for file_change in get_files(pr_url, headers):
