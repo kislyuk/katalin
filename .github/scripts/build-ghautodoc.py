@@ -73,7 +73,7 @@ SUGGESTION_TEMPLATE = """```suggestion
 
 for file_change in get_files(pr_url, headers):
     for old_range, new_range in parse_patch_header(file_change["patch"]):
-        old_range_start = old_range.split(",")[0]
+        old_range_start = int(old_range.split(",")[0])
         # TODO: extract lines from patch
         add_comment(
             pr_url=pr_url,
