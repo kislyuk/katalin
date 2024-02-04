@@ -1,5 +1,7 @@
+import ast
 import json
 import os
+from collections import defaultdict
 
 import requests
 from unidiff import PatchSet
@@ -67,17 +69,12 @@ def add_comment(
 
 
 SUGGESTION_TEMPLATE = """
-### Suggested documentation improvement
-The banana documentation system has detected that this class, method, or function has no docstring.
-
-Here is a proposed docstring for this class, method, or function:
+### _Suggested documentation improvement_
+It looks like this class, method, or function has no docstring. Here is a suggestion:
 ```suggestion
-{original_line}
-{body}
+{original_line}{body}
 ```
-You can edit or replace the proposed docstring before committing it by clicking the "..." menu.
-
-_This is a test of the automated banana documentation system. This is only a test._
+_You can edit or replace the proposed docstring before committing it by clicking the "..." menu._
 """
 
 
@@ -86,9 +83,9 @@ _This is a test of the automated banana documentation system. This is only a tes
 #       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
 
-def suggest_docstring(patch, hunk, line):
+def suggest_docstring(filename, line):
     print("Processing:", line)
-    print("Will add comment at", patch.target_file[2:], line.target_line_no)
+    print("Will add comment at", filename, line.target_line_no)
     add_comment(
         pr_url=pr_url,
         headers=headers,
@@ -97,9 +94,40 @@ def suggest_docstring(patch, hunk, line):
             body=f'    """This is a doctring for {line.value}"""',
         ),
         commit_id=pr_head_sha,
-        path=patch.target_file[2:],
+        path=filename,
         line=line.target_line_no,
     )
+
+
+def has_docstring(node):
+    if isinstance(node.body[0], ast.Constant):
+        if isinstance(node.body[0].value, str):
+            return True
+    return False
+
+
+def get_node_annotation(node, node_type):
+    return {
+        "type": node_type,
+        "name": node.name,
+        "has_docstring": has_docstring(node),
+        "first_body_lineno": node.body[0].lineno,
+    }
+
+
+def get_documentables(module_node):
+    documentables = defaultdict(dict)
+    for node in module_node.body:
+        if isinstance(node, ast.FunctionDef):
+            documentables[node.lineno] = get_node_annotation(node, "function")
+        elif isinstance(node, ast.ClassDef):
+            documentables[node.lineno] = get_node_annotation(node, "class")
+            for subnode in node.body:
+                if isinstance(subnode, ast.FunctionDef):
+                    documentables[subnode.lineno] = get_node_annotation(
+                        subnode, "method"
+                    )
+    return documentables
 
 
 def scan_diff(pr_url, headers):
@@ -107,13 +135,20 @@ def scan_diff(pr_url, headers):
         print("Processing patch", patch.__dict__)
         if not patch.target_file.endswith(".py"):
             continue
+        with open(patch.target_file[2:], "r") as f:
+            source = f.read()
+        module = ast.parse(source)
+        documentables = get_documentables(module)
+
         for hunk in patch:
             print("Processing hunk", hunk.__dict__)
             for line in hunk:
                 if line.line_type != "+":
                     continue
                 if line.value.startswith("def ") or line.value.startswith("class "):
-                    suggest_docstring(patch, hunk, line)
+                    if documentables.get(line.target_line_no):
+                        if not documentables[line.target_line_no]["has_docstring"]:
+                            suggest_docstring(patch.target_file[2:], line)
 
 
 scan_diff(pr_url, headers)
