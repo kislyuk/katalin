@@ -146,9 +146,12 @@ def scan_diff(pr_url, headers):
                 if line.line_type != "+":
                     continue
                 if line.value.startswith("def ") or line.value.startswith("class "):
-                    if documentables.get(line.target_line_no):
-                        if not documentables[line.target_line_no]["has_docstring"]:
-                            suggest_docstring(patch.target_file[2:], line)
+                    if line.target_line_no in documentables:
+                        documentable = documentables[line.target_line_no]
+                        if not documentable["has_docstring"]:
+                            suggest_docstring(
+                                patch.target_file[2:], documentable["first_body_lineno"]
+                            )
 
 
 scan_diff(pr_url, headers)
