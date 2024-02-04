@@ -140,18 +140,31 @@ def scan_diff(pr_url, headers):
         module = ast.parse(source)
         documentables = get_documentables(module)
 
+        all_lines = {}
+        for hunk in patch:
+            for line in hunk:
+                if line.line_type == "+":
+                    all_lines[line.target_line_no] = line
+
         for hunk in patch:
             print("Processing hunk", hunk.__dict__)
             for line in hunk:
                 if line.line_type != "+":
                     continue
-                if line.value.startswith("def ") or line.value.startswith("class "):
-                    if line.target_line_no in documentables:
-                        documentable = documentables[line.target_line_no]
-                        if not documentable["has_docstring"]:
-                            suggest_docstring(
-                                patch.target_file[2:], documentable["first_body_lineno"]
-                            )
+                if not (
+                    line.value.startswith("def ") or line.value.startswith("class ")
+                ):
+                    continue
+                if line.target_line_no not in documentables:
+                    continue
+                documentable = documentables[line.target_line_no]
+                if documentable["first_body_lineno"] not in all_lines:
+                    continue
+                if not documentable["has_docstring"]:
+                    suggest_docstring(
+                        patch.target_file[2:],
+                        all_lines[documentable["first_body_lineno"]],
+                    )
 
 
 scan_diff(pr_url, headers)
