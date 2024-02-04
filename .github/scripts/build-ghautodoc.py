@@ -72,7 +72,8 @@ SUGGESTION_TEMPLATE = """
 ### _Suggested documentation improvement_
 It looks like this class, method, or function has no docstring. Here is a suggestion:
 ```suggestion
-{original_line}{body}
+{body}
+{original_line}
 ```
 _You can edit or replace the proposed docstring before committing it by clicking the "..." menu._
 """
@@ -83,7 +84,7 @@ _You can edit or replace the proposed docstring before committing it by clicking
 #       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
 
-def suggest_docstring(filename, line):
+def suggest_docstring(filename, line, documentable):
     print("Processing:", line)
     print("Will add comment at", filename, line.target_line_no)
     add_comment(
@@ -91,7 +92,7 @@ def suggest_docstring(filename, line):
         headers=headers,
         body=SUGGESTION_TEMPLATE.format(
             original_line=line.value,
-            body=f'    """This is a doctring for {line.value}"""',
+            body=f'    """This is a doctring for {documentable["name"]}"""',
         ),
         commit_id=pr_head_sha,
         path=filename,
@@ -164,6 +165,7 @@ def scan_diff(pr_url, headers):
                     suggest_docstring(
                         patch.target_file[2:],
                         all_lines[documentable["first_body_lineno"]],
+                        documentable,
                     )
 
 
