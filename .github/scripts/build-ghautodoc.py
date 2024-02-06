@@ -1,6 +1,7 @@
 import ast
 import json
 import os
+import textwrap
 from collections import defaultdict
 
 import requests
@@ -20,7 +21,7 @@ Given the following Python file:
 ```
 {content}
 ```
-please provide a concise Python docstring for the {documentable_name} {documentable_type}, with a human readable description of the purpose of the {documentable_type}, and a Sphinx annotation of its input parameters and output value. Provide the text of the docstring directly, without any quotation marks or method signature. Wrap all lines at 115 characters.
+please provide a concise Python docstring for the {documentable_name} {documentable_type}, with a human readable description of the purpose of the {documentable_type}, and a Sphinx annotation of its input parameters and output value. Provide the text of the docstring directly, without any quotation marks or method signature.
 """
 
 headers = {
@@ -94,7 +95,7 @@ _You can edit or replace the proposed docstring before committing it by clicking
 #       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
 
-def get_suggestion(prompt, **format_args):
+def get_suggested_docstring(prompt, **format_args):
     # FIXME: only suggest for names that are unique at top level?
     # e.g. what to do about Foo.get() vs. Bar.get()?
     chat_completion = openai_client.chat.completions.create(
@@ -106,18 +107,17 @@ def get_suggestion(prompt, **format_args):
         ],
         model="gpt-3.5-turbo-1106",
     )
-    completion = chat_completion.choices[0].message.content
-    completion.replace('"""', r"\"\"\"")
-    suggestion = '    """\n'
-    for line in completion.splitlines():
-        suggestion += f"    {line}\n"
-    suggestion += '    """'
-    return suggestion
+    docstring = chat_completion.choices[0].message.content
+    docstring = docstring.replace('"""', r"\"\"\"")
+    docstring = textwrap.fill(docstring, replace_whitespace=False)
+    docstring = textwrap.indent(docstring, " " * 4)
+    docstring = f'    """\n{docstring}\n    """'
+    return docstring
 
 
 def suggest_docstring(filename, line, documentable, source):
     print("Processing:", line)
-    suggested_docstring = get_suggestion(
+    suggested_docstring = get_suggested_docstring(
         prompt,
         content=source,
         documentable_name=documentable["name"],
@@ -156,6 +156,8 @@ def get_node_annotation(node, node_type):
 def get_documentables(module_node):
     documentables = defaultdict(dict)
     for node in module_node.body:
+        if node.name.startswith("_"):
+            continue
         if isinstance(node, ast.FunctionDef):
             documentables[node.lineno] = get_node_annotation(node, "function")
         elif isinstance(node, ast.ClassDef):
