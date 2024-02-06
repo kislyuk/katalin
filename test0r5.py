@@ -17,6 +17,17 @@ from .util.printing import GREEN
 
 
 def build_ami(args):
+    """
+    Build an EC2 AMI.
+
+    :param args: The command line arguments passed to
+    the function.
+    :type args: argparse.Namespace
+    :return: A dictionary
+    containing the ID of the built image and its associated tags.
+    :rtype:
+    dict
+    """
     if args.name is None:
         args.name = f"aegea-{args.architecture}-{time.strftime('%Y-%m-%d-%H-%M')}"
     for key, value in config.build_image.items():
