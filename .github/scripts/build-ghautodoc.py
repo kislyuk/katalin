@@ -107,8 +107,7 @@ def get_suggestion(prompt, **format_args):
         model="gpt-3.5-turbo-1106",
     )
     completion = chat_completion.choices[0].message.content
-    if '"""' in completion:
-        raise ValueError("Invalid docstring")
+    completion.replace('"""', '"')
     suggestion = '    """\n'
     for line in completion.splitlines():
         suggestion += f"    {line}\n"
