@@ -20,7 +20,7 @@ Given the following Python file:
 ```
 {content}
 ```
-please provide a concise Python docstring for the {documentable_name} {documentable_type}, with a human readable description of the purpose of the {documentable_type}, and a Sphinx annotation of its input parameters and output value. Provide the text of the docstring directly, without any quotation marks or method signature.
+please provide a concise Python docstring for the {documentable_name} {documentable_type}, with a human readable description of the purpose of the {documentable_type}, and a Sphinx annotation of its input parameters and output value. Provide the text of the docstring directly, without any quotation marks or method signature. Wrap all lines at 115 characters.
 """
 
 headers = {
