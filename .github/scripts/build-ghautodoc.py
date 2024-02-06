@@ -108,7 +108,7 @@ def get_suggested_docstring(prompt, **format_args):
         model="gpt-3.5-turbo-1106",
     )
     docstring = chat_completion.choices[0].message.content
-    docstring = docstring.replace('"""', r"\"\"\"")
+    docstring = docstring.replace('"""', "")
     docstring = textwrap.fill(docstring, replace_whitespace=False)
     docstring = textwrap.indent(docstring, " " * 4)
     docstring = f'    """\n{docstring}\n    """'
