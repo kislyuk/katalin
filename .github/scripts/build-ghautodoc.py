@@ -156,13 +156,13 @@ def get_node_annotation(node, node_type):
 def get_documentables(module_node):
     documentables = defaultdict(dict)
     for node in module_node.body:
-        if node.name.startswith("_"):
-            continue
-        if isinstance(node, ast.FunctionDef):
+        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_"):
             documentables[node.lineno] = get_node_annotation(node, "function")
-        elif isinstance(node, ast.ClassDef):
+        elif isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
             documentables[node.lineno] = get_node_annotation(node, "class")
             for subnode in node.body:
+                if subnode.name.startswith("_"):
+                    continue
                 if isinstance(subnode, ast.FunctionDef):
                     documentables[subnode.lineno] = get_node_annotation(
                         subnode, "method"
