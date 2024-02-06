@@ -4,6 +4,7 @@ import os
 from collections import defaultdict
 
 import requests
+from openai import OpenAI
 from unidiff import PatchSet
 
 print("ghautodoc")
@@ -14,10 +15,20 @@ pr_url = github_context["event"]["pull_request"]["url"]
 pr_head_sha = github_context["event"]["pull_request"]["head"]["sha"]
 # diff_url = github_context["event"]["pull_request"]["diff_url"]
 
+prompt = """
+Given the following Python file:
+```
+{content}
+```
+please provide a concise Python docstring for the {documentable_name} {documentable_type}, with a human readable description of the purpose of the {documentable_type}, and a Sphinx annotation of its input parameters and output value. Provide the text of the docstring directly, without any quotation marks or method signature.
+"""
+
 headers = {
     "Accept": "application/vnd.github+json",
     "Authorization": f"Bearer {github_context['token']}",
 }
+
+openai_client = OpenAI()
 
 
 def get_diff(pr_url: str, headers: dict) -> str:
@@ -69,11 +80,10 @@ def add_comment(
 
 
 SUGGESTION_TEMPLATE = """
-### _Suggested documentation improvement_
-It looks like this class, method, or function has no docstring. Here is a suggestion:
+#### _Suggested documentation improvement_
+It looks like this class, method, or function has no docstring.
 ```suggestion
-{body}
-{original_line}
+{original_line}{body}
 ```
 _You can edit or replace the proposed docstring before committing it by clicking the "..." menu._
 """
@@ -84,8 +94,30 @@ _You can edit or replace the proposed docstring before committing it by clicking
 #       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
 
-def suggest_docstring(filename, line, documentable):
+def get_suggestion(prompt, **format_args):
+    chat_completion = openai_client.chat.completions.create(
+        messages=[
+            {
+                "role": "user",
+                "content": prompt.format(**format_args),
+            }
+        ],
+        model="gpt-3.5-turbo-1106",
+    )
+    suggestion = chat_completion.choices[0].message.content
+    if '"""' in suggestion:
+        raise ValueError("Invalid docstring")
+    return suggestion
+
+
+def suggest_docstring(filename, line, documentable, source):
     print("Processing:", line)
+    get_suggestion(
+        prompt,
+        content=source,
+        documentable_name=documentable["name"],
+        documentable_type=documentable["type"],
+    )
     print("Will add comment at", filename, line.target_line_no)
     add_comment(
         pr_url=pr_url,
@@ -136,8 +168,14 @@ def scan_diff(pr_url, headers):
         print("Processing patch", patch.__dict__)
         if not patch.target_file.endswith(".py"):
             continue
+        if any(
+            f"/{x}/" in patch.target_file for x in ["tests", "migrations", "backfills"]
+        ):
+            continue
         with open(patch.target_file[2:], "r") as f:
             source = f.read()
+        if "```" in source:
+            continue
         module = ast.parse(source)
         documentables = get_documentables(module)
 
@@ -166,6 +204,7 @@ def scan_diff(pr_url, headers):
                         patch.target_file[2:],
                         all_lines[documentable["first_body_lineno"]],
                         documentable,
+                        source,
                     )
 
 
