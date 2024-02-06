@@ -106,9 +106,13 @@ def get_suggestion(prompt, **format_args):
         ],
         model="gpt-3.5-turbo-1106",
     )
-    suggestion = chat_completion.choices[0].message.content
-    if '"""' in suggestion:
+    completion = chat_completion.choices[0].message.content
+    if '"""' in completion:
         raise ValueError("Invalid docstring")
+    suggestion = '    """\n'
+    for line in completion.splitlines():
+        suggestion += f"    {line}\n"
+    suggestion += '    """'
     return suggestion
 
 
@@ -125,8 +129,7 @@ def suggest_docstring(filename, line, documentable, source):
         pr_url=pr_url,
         headers=headers,
         body=SUGGESTION_TEMPLATE.format(
-            original_line=line.value,
-            body=f'    """{suggested_docstring}"""',
+            original_line=line.value, body=suggested_docstring
         ),
         commit_id=pr_head_sha,
         path=filename,
@@ -135,9 +138,10 @@ def suggest_docstring(filename, line, documentable, source):
 
 
 def has_docstring(node):
-    if isinstance(node.body[0], ast.Constant):
-        if isinstance(node.body[0].value, str):
-            return True
+    if isinstance(node.body[0], ast.Expr):
+        if isinstance(node.body[0].value, ast.Constant):
+            if isinstance(node.body[0].value.value, str):
+                return True
     return False
 
 
