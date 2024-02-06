@@ -161,9 +161,9 @@ def get_documentables(module_node):
         elif isinstance(node, ast.ClassDef) and not node.name.startswith("_"):
             documentables[node.lineno] = get_node_annotation(node, "class")
             for subnode in node.body:
-                if subnode.name.startswith("_"):
-                    continue
                 if isinstance(subnode, ast.FunctionDef):
+                    if subnode.name.startswith("_"):
+                        continue
                     documentables[subnode.lineno] = get_node_annotation(
                         subnode, "method"
                     )
