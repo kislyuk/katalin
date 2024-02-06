@@ -95,6 +95,8 @@ _You can edit or replace the proposed docstring before committing it by clicking
 
 
 def get_suggestion(prompt, **format_args):
+    # FIXME: only suggest for names that are unique at top level?
+    # e.g. what to do about Foo.get() vs. Bar.get()?
     chat_completion = openai_client.chat.completions.create(
         messages=[
             {
@@ -112,7 +114,7 @@ def get_suggestion(prompt, **format_args):
 
 def suggest_docstring(filename, line, documentable, source):
     print("Processing:", line)
-    get_suggestion(
+    suggested_docstring = get_suggestion(
         prompt,
         content=source,
         documentable_name=documentable["name"],
@@ -124,7 +126,7 @@ def suggest_docstring(filename, line, documentable, source):
         headers=headers,
         body=SUGGESTION_TEMPLATE.format(
             original_line=line.value,
-            body=f'    """This is a doctring for {documentable["name"]}"""',
+            body=f'    """{suggested_docstring}"""',
         ),
         commit_id=pr_head_sha,
         path=filename,
