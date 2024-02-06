@@ -203,12 +203,12 @@ def scan_diff(pr_url, headers):
                 if line.target_line_no not in documentables:
                     continue
                 documentable = documentables[line.target_line_no]
-                if documentable["first_body_lineno"] not in all_lines:
+                if documentable["first_body_lineno"] - 1 not in all_lines:
                     continue
                 if not documentable["has_docstring"]:
                     suggest_docstring(
                         patch.target_file[2:],
-                        all_lines[documentable["first_body_lineno"]],
+                        all_lines[documentable["first_body_lineno"] - 1],
                         documentable,
                         source,
                     )
