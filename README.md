@@ -1,14 +1,3 @@
-baobab
-bab
-ssxac
+This is a test of the automated documentation system.
 
-ac
-acx
-
-av
-a
-b
-a
-na
-basfbas
-banana
+This is only a test.
