@@ -16,7 +16,7 @@ jobs:
         python-version: '3.12'
     - uses: kislyuk/ghautodoc/github-action-workflows/python-code-advisor@main
       with:
-        OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
+        openai-api-key: ${{secrets.OPENAI_API_KEY}}
 #    - name: Run script
 #      env:
 #        GITHUB_TOKEN: ${{github.token}}

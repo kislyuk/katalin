@@ -20,13 +20,9 @@ defaults:
 runs:
   using: "composite"
   steps:
-    - uses: actions/checkout@v4
-    - uses: actions/setup-python@v5
-      with:
-        python-version: '3.12'
-    - run: pip install -r requirements.txt
+    - run: pip install -r "${{github.action_path}}/requirements.txt"
       shell: bash
     - run: export GITHUB_TOKEN="{{inputs.github-token}}" GITHUB_EVENT="{{inputs.github-event}}" OPENAI_API_KEY="{{inputs.openai-api-key}}"
       shell: bash
-    - run: python main.py
+    - run: python "${{github.action_path}}/main.py"
       shell: bash
