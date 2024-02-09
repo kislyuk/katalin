@@ -131,7 +131,7 @@ def get_node_annotation(node, node_type):
         "type": node_type,
         "name": node.name,
         "has_docstring": has_docstring(node),
-        "first_body_lineno": node.body[0].lineno,
+        "end_lineno": node.end_lineno,
     }
 
 
@@ -190,12 +190,12 @@ def scan_diff(pr_url, headers):
                 if line.target_line_no not in documentables:
                     continue
                 documentable = documentables[line.target_line_no]
-                if documentable["first_body_lineno"] - 1 not in all_lines:
+                if documentable["end_lineno"] in all_lines:
                     continue
                 if not documentable["has_docstring"]:
                     suggest_docstring(
                         patch.target_file[2:],
-                        all_lines[documentable["first_body_lineno"] - 1],
+                        all_lines[documentable["end_lineno"]],
                         documentable,
                         source,
                     )
