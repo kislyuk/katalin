@@ -131,7 +131,7 @@ def get_node_annotation(node, node_type):
         "type": node_type,
         "name": node.name,
         "has_docstring": has_docstring(node),
-        "end_lineno": node.end_lineno,
+        "first_body_lineno": node.body[0].lineno,
     }
 
 
@@ -150,6 +150,17 @@ def get_documentables(module_node):
                         subnode, "method"
                     )
     return documentables
+
+
+def get_docstring_lineno(documentable, all_lines):
+    first_body_lineno = documentable["first_body_lineno"] - 1
+    while True:
+        if first_body_lineno not in all_lines:
+            break
+        if all_lines[first_body_lineno].value.strip().startswith("#"):
+            first_body_lineno -= 1
+        else:
+            return first_body_lineno
 
 
 def scan_diff(pr_url, headers):
@@ -190,12 +201,11 @@ def scan_diff(pr_url, headers):
                 if line.target_line_no not in documentables:
                     continue
                 documentable = documentables[line.target_line_no]
-                if documentable["end_lineno"] not in all_lines:
-                    continue
+                docstring_lineno = get_docstring_lineno(documentable, all_lines)
                 if not documentable["has_docstring"]:
                     suggest_docstring(
                         patch.target_file[2:],
-                        all_lines[documentable["end_lineno"]],
+                        all_lines[docstring_lineno],
                         documentable,
                         source,
                     )
