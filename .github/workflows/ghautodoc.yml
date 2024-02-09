@@ -14,11 +14,14 @@ jobs:
     - uses: actions/setup-python@v5
       with:
         python-version: '3.12'
-    - name: Run script
-      env:
-        GITHUB_TOKEN: ${{github.token}}
-        GITHUB_EVENT: ${{toJson(github.event)}}
+    - uses: kislyuk/ghautodoc/github-action-workflows/python-code-advisor@main
+      with:
         OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
-      run: |
-        pip install -r requirements.txt
-        python .github/scripts/build-ghautodoc.py
+#    - name: Run script
+#      env:
+#        GITHUB_TOKEN: ${{github.token}}
+#        GITHUB_EVENT: ${{toJson(github.event)}}
+#        OPENAI_API_KEY: ${{secrets.OPENAI_API_KEY}}
+#      run: |
+#        pip install -r requirements.txt
+#        python .github/scripts/build-ghautodoc.py
