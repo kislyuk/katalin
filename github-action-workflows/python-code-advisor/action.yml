@@ -10,7 +10,7 @@ inputs:
     required: true
   github-event:
     description: Description of the GitHub pull request event
-    default: ${{ github.event }}
+    default: ${{ toJson(github.event) }}
     required: true
 
 defaults:
@@ -26,7 +26,7 @@ runs:
         python-version: '3.12'
     - run: pip install -r requirements.txt
       shell: bash
-    - run: export GITHUB_TOKEN="{{inputs.github-token}}" GITHUB_EVENT="{{toJson(inputs.github-event)}}" OPENAI_API_KEY="{{inputs.openai-api-key}}"
+    - run: export GITHUB_TOKEN="{{inputs.github-token}}" GITHUB_EVENT="{{inputs.github-event}}" OPENAI_API_KEY="{{inputs.openai-api-key}}"
       shell: bash
     - run: python main.py
       shell: bash
