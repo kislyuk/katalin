@@ -1,5 +1,6 @@
 import ast
 import json
+import logging
 import os
 import textwrap
 from collections import defaultdict
@@ -8,13 +9,8 @@ import requests
 from openai import OpenAI
 from unidiff import PatchSet
 
-print("ghautodoc")
-
-github_context = json.loads(os.environ["GITHUB_CONTEXT"])
-
-pr_url = github_context["event"]["pull_request"]["url"]
-pr_head_sha = github_context["event"]["pull_request"]["head"]["sha"]
-# diff_url = github_context["event"]["pull_request"]["diff_url"]
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 prompt = """
 Given the following Python file:
@@ -24,12 +20,19 @@ Given the following Python file:
 please provide a concise Python docstring for the {documentable_name} {documentable_type}, with a human readable description of the purpose of the {documentable_type}, and a Sphinx annotation of its input parameters and output value. Provide the text of the docstring directly, without any quotation marks or method signature.
 """
 
-headers = {
-    "Accept": "application/vnd.github+json",
-    "Authorization": f"Bearer {github_context['token']}",
-}
+SUGGESTION_TEMPLATE = """
+#### _Suggested documentation improvement_
+It looks like this class, method, or function has no docstring.
+```suggestion
+{original_line}{body}
+```
+_You can edit or replace the proposed docstring before committing it by clicking the "..." menu._
+"""
 
 openai_client = OpenAI()
+pr_url = ""
+pr_head_sha = ""
+github_headers = {}
 
 
 def get_diff(pr_url: str, headers: dict) -> str:
@@ -69,30 +72,9 @@ def add_comment(
         ),
         timeout=30,
     )
-    print(res.text)
+    logger.info(res.text)
     res.raise_for_status()
     return res.json()
-
-
-# def parse_patch_header(patch: str):
-#     for line in patch.splitlines():
-#         if re.match(r"^@@ -(\d+)(?:,(\d+))? \+(\d+)(?:,(\d+))?\ @@[ ]?(.*)", line):
-#     return re.findall(r"@@ -(.+?) \+(.+?) @@", "@@ -0,0 +1 @@\n+a")
-
-
-SUGGESTION_TEMPLATE = """
-#### _Suggested documentation improvement_
-It looks like this class, method, or function has no docstring.
-```suggestion
-{original_line}{body}
-```
-_You can edit or replace the proposed docstring before committing it by clicking the "..." menu._
-"""
-
-
-# https://api.github.com/repos/OWNER/REPO/pulls/PULL_NUMBER/comments \
-#  -d '{"body":"Great stuff!","commit_id":"6dcb09b5b57875f334f61aebed695e2e4193db5e",
-#       "path":"file1.txt","start_line":1,"start_side":"RIGHT","line":2,"side":"RIGHT"}'
 
 
 def get_suggested_docstring(prompt, **format_args):
@@ -105,7 +87,7 @@ def get_suggested_docstring(prompt, **format_args):
                 "content": prompt.format(**format_args),
             }
         ],
-        model="gpt-3.5-turbo-1106",
+        model="gpt-3.5-turbo",
     )
     docstring = chat_completion.choices[0].message.content
     docstring = docstring.replace('"""', "")
@@ -116,17 +98,17 @@ def get_suggested_docstring(prompt, **format_args):
 
 
 def suggest_docstring(filename, line, documentable, source):
-    print("Processing:", line)
+    logger.info("Processing: %s", line)
     suggested_docstring = get_suggested_docstring(
         prompt,
         content=source,
         documentable_name=documentable["name"],
         documentable_type=documentable["type"],
     )
-    print("Will add comment at", filename, line.target_line_no)
+    logger.info("Will add comment at %s:%s", filename, line.target_line_no)
     add_comment(
         pr_url=pr_url,
-        headers=headers,
+        headers=github_headers,
         body=SUGGESTION_TEMPLATE.format(
             original_line=line.value, body=suggested_docstring
         ),
@@ -172,7 +154,7 @@ def get_documentables(module_node):
 
 def scan_diff(pr_url, headers):
     for patch in PatchSet(get_diff(pr_url, headers)):
-        print("Processing patch", patch.__dict__)
+        logger.info("Processing patch %s", patch.__dict__)
         if not patch.target_file.endswith(".py"):
             continue
         if any(
@@ -183,7 +165,11 @@ def scan_diff(pr_url, headers):
             source = f.read()
         if "```" in source:
             continue
-        module = ast.parse(source)
+        try:
+            module = ast.parse(source)
+        except Exception as e:
+            logger.info("Error parsing %s: %s", patch.target_file, e)
+            continue
         documentables = get_documentables(module)
 
         all_lines = {}
@@ -193,7 +179,7 @@ def scan_diff(pr_url, headers):
                     all_lines[line.target_line_no] = line
 
         for hunk in patch:
-            print("Processing hunk", hunk.__dict__)
+            logger.info("Processing hunk %s", hunk.__dict__)
             for line in hunk:
                 if line.line_type != "+":
                     continue
@@ -215,18 +201,16 @@ def scan_diff(pr_url, headers):
                     )
 
 
-scan_diff(pr_url, headers)
-# for file_change in get_files(pr_url, headers):
-#     for source_offset, target_offset in parse_patch_header(file_change["patch"]):
-#         source_offset_start = int(source_offset.split(",")[0])
-#         # TODO: extract lines from patch
-#         add_comment(
-#             pr_url=pr_url,
-#             headers=headers,
-#             body=SUGGESTION_TEMPLATE.format(
-#                 body=f"This is a suggestion for {file_change}"
-#             ),
-#             commit_id=pr_head_sha,
-#             path=file_change["filename"],
-#             line=source_offset_start + 1,
-#         )
+if __name__ == "__main__":
+    logger.info("Begin ghautodoc")
+    github_headers = {
+        "Accept": "application/vnd.github+json",
+        "Authorization": f"Bearer {os.environ['GITHUB_TOKEN']}",
+    }
+
+    github_event = json.loads(os.environ["GITHUB_EVENT"])
+
+    pr_url = github_event["pull_request"]["url"]
+    pr_head_sha = github_event["pull_request"]["head"]["sha"]
+
+    scan_diff(pr_url, headers=github_headers)
