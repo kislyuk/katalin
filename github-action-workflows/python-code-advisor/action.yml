@@ -12,6 +12,11 @@ inputs:
     description: Description of the GitHub pull request event
     default: ${{ github.event }}
     required: true
+
+defaults:
+  run:
+    shell: bash
+
 runs:
   using: "composite"
   steps:
