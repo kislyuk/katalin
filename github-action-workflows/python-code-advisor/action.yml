@@ -22,7 +22,9 @@ runs:
   steps:
     - run: pip install -r "${{github.action_path}}/requirements.txt"
       shell: bash
-    - run: export GITHUB_TOKEN="{{inputs.github-token}}" GITHUB_EVENT="{{inputs.github-event}}" OPENAI_API_KEY="{{inputs.openai-api-key}}"
-      shell: bash
     - run: python "${{github.action_path}}/main.py"
       shell: bash
+      env:
+        GITHUB_TOKEN: {{ inputs.github-token }}
+        GITHUB_EVENT: {{ inputs.github-event }}
+        OPENAI_API_KEY: {{ inputs.openai-api-key }}
