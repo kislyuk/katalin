@@ -87,7 +87,7 @@ def get_suggested_docstring(prompt, **format_args):
                 "content": prompt.format(**format_args),
             }
         ],
-        model="gpt-3.5-turbo",
+        model="gpt-3.5-turbo-0125",
     )
     docstring = chat_completion.choices[0].message.content
     docstring = docstring.replace('"""', "")
