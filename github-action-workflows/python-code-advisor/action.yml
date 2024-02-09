@@ -25,6 +25,6 @@ runs:
     - run: python "${{github.action_path}}/main.py"
       shell: bash
       env:
-        GITHUB_TOKEN: {{ inputs.github-token }}
-        GITHUB_EVENT: {{ inputs.github-event }}
-        OPENAI_API_KEY: {{ inputs.openai-api-key }}
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        GITHUB_EVENT: ${{ inputs.github-event }}
+        OPENAI_API_KEY: ${{ inputs.openai-api-key }}
