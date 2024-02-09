@@ -1,0 +1,24 @@
+name: Python Code Advisor
+description: Comments on PRs with suggested documentation, security, and other improvements
+inputs:
+  openai-api-key:
+    description: The OpenAI API key used to create an authenticated OpenAI API client
+    required: true
+  github-token:
+    description: The GitHub token used to create an authenticated GitHub API client
+    default: ${{ github.token }}
+    required: true
+  github-event:
+    description: Description of the GitHub pull request event
+    default: ${{ github.event }}
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.12'
+    - run: pip install -r requirements.txt
+    - run: export GITHUB_TOKEN="{{inputs.github-token}}" GITHUB_EVENT="{{toJson(inputs.github-event)}}" OPENAI_API_KEY="{{inputs.openai-api-key}}"
+    - run: python main.py
