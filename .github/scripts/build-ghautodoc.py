@@ -91,7 +91,7 @@ def get_suggested_docstring(prompt, **format_args):
     )
     docstring = chat_completion.choices[0].message.content
     docstring = docstring.replace('"""', "")
-    docstring = textwrap.fill(docstring, replace_whitespace=False)
+    docstring = textwrap.fill(docstring, replace_whitespace=False, width=116)
     docstring = textwrap.indent(docstring, " " * 4)
     docstring = f'    """\n{docstring}\n    """'
     return docstring
