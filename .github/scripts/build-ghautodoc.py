@@ -190,7 +190,7 @@ def scan_diff(pr_url, headers):
                 if line.target_line_no not in documentables:
                     continue
                 documentable = documentables[line.target_line_no]
-                if documentable["end_lineno"] in all_lines:
+                if documentable["end_lineno"] not in all_lines:
                     continue
                 if not documentable["has_docstring"]:
                     suggest_docstring(
