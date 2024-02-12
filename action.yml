@@ -1,7 +1,9 @@
 name: katalin - Python code advisor
 description: Comments on PRs with suggested documentation, security, and logic improvements
-icon: aperture
-color: blue
+branding:
+  icon: aperture
+  color: blue
+
 inputs:
   openai-api-key:
     description: The OpenAI API key used to create an authenticated OpenAI API client
