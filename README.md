@@ -3,6 +3,8 @@
 This is a GitHub action that generates LLM-assisted suggestions for improving Python code in PRs, and posts them as PR
 comments.
 
+See [this sample PR](https://github.com/kislyuk/katalin/pull/48) for an example of katalin in action.
+
 ## Inputs
 
 ### `openai-api-token`
