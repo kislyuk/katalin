@@ -1,4 +1,4 @@
-name: katalin
+name: katalin - Python code advisor
 description: Comments on PRs with suggested documentation, security, and logic improvements
 inputs:
   openai-api-key:
