@@ -25,18 +25,18 @@ A newline-separated list of advisor modules to enable. Available advisors are:
 A newline-separated list of colon-separated `node:prompt` pairs. TODO
 -->
 
-## Outputs
-
-None
-
 ## Example usage
 
 ```yaml
 uses: kislyuk/katalin@v1
 with:
-  openai-api-token: ${{secrets.GITHUB_TOKEN}}
+  openai-api-token: ${{secrets.OPENAI_API_TOKEN}}
   enabled-advisors: |-
     docstrings
     security
     logic-check
 ```
+
+See
+[Using secrets in GitHub Actions](https://docs.github.com/en/actions/security-guides/using-secrets-in-github-actions)
+for details on how to set the secret above.
