@@ -30,7 +30,7 @@ A newline-separated list of colon-separated `node:prompt` pairs. TODO
 ```yaml
 uses: kislyuk/katalin@v1
 with:
-  openai-api-token: ${{secrets.OPENAI_API_TOKEN}}
+  openai-api-key: ${{secrets.OPENAI_API_KEY}}
   enabled-advisors: |-
     docstrings
     security
